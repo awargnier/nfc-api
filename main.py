@@ -2,7 +2,9 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from motor.motor_asyncio import AsyncIOMotorClient
 
-app = FastAPI()
+app = FastAPI(
+    docs_url='/'
+)
 
 # MongoDB connection
 client = AsyncIOMotorClient("mongodb+srv://allGroup:Estiam75020@nfcreader.5mrffd4.mongodb.net/")
