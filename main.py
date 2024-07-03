@@ -2,6 +2,7 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from motor.motor_asyncio import AsyncIOMotorClient
 from bson import json_util
+from fastapi.responses import JSONResponse
 
 app = FastAPI(
     docs_url='/'
@@ -32,7 +33,11 @@ async def create_user(user: User):
 async def read_users():
     try:
         users = await collection.find().to_list(length=100)
-        return json_util.dumps(users)
+        users_list = []
+        for user in users:
+            user["_id"] = str(user["_id"])
+            users_list.append(users)
+        return JSONResponse(content=users, media_type="application/json")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -40,9 +45,11 @@ async def read_users():
 async def read_user(sub: str):
     try:
         user = await collection.find_one({"sub": sub})
+        user["_id"] = str(user["_id"])
         if user is None:
             raise HTTPException(status_code=404, detail="User not found")
-        return json_util.dumps(user)
+        return JSONResponse(content=user, media_type="application/json")
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
