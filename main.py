@@ -1,6 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from motor.motor_asyncio import AsyncIOMotorClient
+from bson import json_util
 
 app = FastAPI(
     docs_url='/'
@@ -12,7 +13,7 @@ db = client["NFCReader"]
 collection = db["users"]
 
 class User(BaseModel):
-    id: int
+    sub: str
     name: str
     email: str
     iat: int
@@ -31,32 +32,32 @@ async def create_user(user: User):
 async def read_users():
     try:
         users = await collection.find().to_list(length=100)
-        return users
+        return json_util.dumps(users)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.get("/users/{id}")
-async def read_user(id: int):
+@app.get("/users/{sub}")
+async def read_user(sub: str):
     try:
-        user = await collection.find_one({"id": id})
+        user = await collection.find_one({"sub": sub})
         if user is None:
             raise HTTPException(status_code=404, detail="User not found")
-        return user
+        return json_util.dumps(user)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.put("/users/{id}")
-async def update_user(id: str, user: User):
+@app.put("/users/{sub}")
+async def update_user(sub: str, user: User):
     try:
-        await collection.update_one({"id": id}, {"$set": user.dict()})
+        await collection.update_one({"sub": sub}, {"$set": user.dict()})
         return {"message": "User updated successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.delete("/users/{id}")
-async def delete_user(id: int):
+@app.delete("/users/{sub}")
+async def delete_user(sub: str):
     try:
-        await collection.delete_one({"id": id})
+        await collection.delete_one({"sub": sub})
         return {"message": "User deleted successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
